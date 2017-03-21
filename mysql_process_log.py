@@ -1,30 +1,26 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-"""myprofiler - Casual MySQL Profiler
+"""mysql_process_log - MySQL Processlist Log
 
-https://github.com/methane/myprofiler
+https://github.com/smaruki/mysq_process_log
 """
 
 import os
 import sys
 import re
 from time import sleep
+from datetime import datetime
 from collections import defaultdict
 from ConfigParser import SafeConfigParser
 from optparse import OptionParser
 
 try:
-    import MySQLdb  # MySQL-python
-    from MySQLdb.cursors import DictCursor
+    import pymysql as MySQLdb  # PyMySQL
+    from pymysql.cursors import DictCursor
 except ImportError:
-    try:
-        import pymysql as MySQLdb  # PyMySQL
-        from pymysql.cursors import DictCursor
-    except ImportError:
-        print "Please install MySQLdb or PyMySQL"
-        sys.exit(1)
-
+    print "Please install pymysql"
+    sys.exit(1)
 
 CMD_PROCESSLIST = "show full processlist"
 
@@ -52,25 +48,11 @@ def processlist(con):
     cur.execute(CMD_PROCESSLIST)
     for row in cur.fetchall():
         if row['Info']:
-            yield row['Info']
+            yield row
 
 
 def normalize_query(row):
-    """
-    Modify query to summarize.
-    """
     row = ' '.join(row.split())
-    subs = [
-            (r"\b\d+\b", "N"),
-            (r"\b0x[0-9A-Fa-f]+\b", "0xN"),
-            (r"(\\')", ''),
-            (r'(\\")', ''),
-            (r"'[^']+'", "'S'"),
-            (r'"[^"]+"', '"S"'),
-            (r'(([NS],){4,})', r'...'),
-            ]
-    for pat,sub in subs:
-        row = re.sub(pat, sub, row)
     return row
 
 
@@ -91,24 +73,32 @@ def build_option_parser():
             default="DEFAULT"
             )
     parser.add_option(
-            '-n', '--num-summary', metavar="K",
+            '-n', '--num-summary', 
+            metavar="K",
             help="show most K common queries. (default: 10)",
-            type="int", default=10
+            type="int", 
+            default=10
             )
     parser.add_option(
             '-i', '--interval',
-            help="Interval of executing show processlist [sec] (default: 1.0)",
-            type="float", default=1.0
+            help="Interval of executing show processlist [sec] (default: 2.0)",
+            type="float", 
+            default=2.0
+            )
+    parser.add_option(
+            '-m', '--mintime',
+            help="Minimum time run query (default: 10)",
+            type="int", 
+            default=15
             )
     return parser
 
 
 def show_summary(counter, limit, file=sys.stdout):
-    print >>file, '---'
     items = counter.items()
     items.sort(key=lambda x: x[1], reverse=True)
-    for query, count in items[:limit]:
-        print >>file, "%4d %s" % (count, query)
+    for id, result in items[:limit]:
+        print >>file, "%s" % (result)
 
 
 def main():
@@ -127,14 +117,24 @@ def main():
     try:
         while True:
             for row in processlist(con):
-                if row == CMD_PROCESSLIST:
+                if row['Info'] == CMD_PROCESSLIST or row['Time'] < opts.mintime: 
                     continue
-                counter[normalize_query(row)] += 1
+
+                query = normalize_query(row['Info'])
+                result = ('%s - Execution Time: %s - Id: %s -  User: %s - DB: %s - Info: %s' % (
+                    datetime.now(),
+                    row['Time'],
+                    row['Id'],
+                    row['User'],
+                    row['db'],
+                    query
+                    ))
+                result += '\n------------------------------------------------------------' 
+                counter[row['Id']] = result
                 if outfile:
-                    print >>outfile, row
+                    print >>outfile, result
 
             show_summary(counter, opts.num_summary)
-            print
             sleep(opts.interval)
     finally:
         if outfile:

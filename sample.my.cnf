@@ -1,14 +1,14 @@
 [spamegg]
-host=spameggdb
-database=spamegg
-user=spam_user
+host=localhost
+database=processos
+user=smaruki_user
 password=secret
 
 
 [spamegg-slave]
-host=spameggdb-slave
-database=spamegg
-user=spam_user
+host=localhost
+database=processos
+user=smaruki_user
 password=secret
 
 

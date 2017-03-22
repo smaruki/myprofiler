@@ -3,7 +3,10 @@ mysql_process_log
 MySQL Processlist Log<br>
 Logging slow mysql queries<br>
 
-**Usage: myprofiler.py [options]** <br>
+**Usage:** <br>
+```
+> myprofiler.py [options]
+```
 
 Options:<br>
 ```

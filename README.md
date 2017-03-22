@@ -1,4 +1,5 @@
-# mysql_process_log
+mysql_process_log
+--------
 MySQL Processlist Log<br>
 Logging slow mysql queries<br>
 

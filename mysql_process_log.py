@@ -73,13 +73,6 @@ def build_option_parser():
             default="DEFAULT"
             )
     parser.add_option(
-            '-n', '--num-summary', 
-            metavar="K",
-            help="show most K common queries. (default: 10)",
-            type="int", 
-            default=10
-            )
-    parser.add_option(
             '-i', '--interval',
             help="Interval of executing show processlist [sec] (default: 2.0)",
             type="float", 
@@ -94,10 +87,10 @@ def build_option_parser():
     return parser
 
 
-def show_summary(counter, limit, file=sys.stdout):
+def show_summary(counter, file=sys.stdout):
     items = counter.items()
     items.sort(key=lambda x: x[1], reverse=True)
-    for id, result in items[:limit]:
+    for id, result in items:
         print >>file, "%s" % (result)
 
 
@@ -114,6 +107,7 @@ def main():
         parser.error(e)
 
     counter = defaultdict(int)
+    print('Runing...\n')
     try:
         while True:
             for row in processlist(con):
@@ -134,12 +128,12 @@ def main():
                 if outfile:
                     print >>outfile, result
 
-            show_summary(counter, opts.num_summary)
+            show_summary(counter)
             sleep(opts.interval)
     finally:
         if outfile:
             print >>outfile, "\nSummary"
-            show_summary(counter, opts.num_summary, outfile)
+            show_summary(counter, outfile)
 
 
 if __name__ == '__main__':

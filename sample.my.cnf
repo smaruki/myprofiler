@@ -1,14 +1,12 @@
-[spamegg]
+[DEFAULT]
 host=localhost
 database=processos
 user=smaruki_user
 password=secret
 
 
-[spamegg-slave]
+[db-slave]
 host=localhost
 database=processos
 user=smaruki_user
 password=secret
-
-

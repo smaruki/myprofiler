@@ -5,7 +5,7 @@ Logging slow mysql queries<br>
 
 **Usage:** <br>
 ```
-> myprofiler.py [options]
+> python myprofiler.py [options]
 ```
 
 Options:<br>
